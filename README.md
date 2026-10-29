@@ -1,9 +1,26 @@
-# ECS IoT
+# DriveLink IoT
 
-Plataforma de monitoreo de sensores IoT de **puesta a tierra / protección
-eléctrica** vía MQTT (Mosquitto) con backend Django y dashboard en tiempo casi
-real (polling) usando Chart.js. Propiedad de **Electrical Services Company
-Temuco**.
+Plataforma IoT del **Grupo Solemne 2 · Redes Industriales** para el
+**monitoreo y control de un motor industrial**: un PLC Siemens S7-1200 que
+gobierna un variador Mitsubishi FR-D720S, una **ESP32** como sensor IoT
+inalámbrico y una **Raspberry Pi** como servidor y gateway. Basada en Django,
+con MQTT (Mosquitto) y un dashboard en tiempo casi real (Chart.js). Parte del
+repositorio de ejemplo del profesor (`urbanatika/ecs-iot`).
+
+![Dashboard DriveLink IoT](docs/img/dashboard.png)
+
+## Cómo cumple la rúbrica
+
+| Requisito | Dónde |
+|---|---|
+| Repositorio en cuenta personal | Este repositorio (el original queda como remoto `profesor`) |
+| Diseño propio con logo y colores | Logo `backend/monitoring/static/monitoring/img/drivelink-mark.svg`, paleta en `dashboard.css` (`--brand-primary` #0B3D5C, `--brand-accent` #00C2A8), nombre en `SITE_NAME` de `settings.py` |
+| Sensor IoT con datos en tiempo real | ESP32 por MQTT (`firmware/`) y gateway PLC ⇄ MQTT en la Raspberry (`edge/raspberry/gateway.py`); el dashboard se actualiza cada ~2.5 s |
+| Control de usuarios con base de datos | Login de Django con roles Global / Administrador / Operador, guardados en SQLite (o PostgreSQL con Docker) |
+| Control de variables de proceso | Lectura de entradas, salidas y analógicas del PLC, y botón `mando_q0_2` (M0.2) que escribe en el PLC desde el dashboard |
+
+Conexión del hardware y puesta en marcha en la Raspberry:
+[docs/CONEXION-PLC-RASPBERRY-ESP32.md](docs/CONEXION-PLC-RASPBERRY-ESP32.md).
 
 ## Arquitectura
 
