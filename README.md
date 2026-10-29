@@ -14,6 +14,11 @@ sensores/simulador --MQTT--> mosquitto --suscripción--> mqtt_listener (Django m
                                                                                         web (Django, gunicorn) <-- navegador (polling cada ~2.5s)
 ```
 
+**PLC S7-1200, Raspberry Pi y ESP32:** el PLC entra a la plataforma a través
+del gateway de la Raspberry (`edge/raspberry/gateway.py`, protocolo S7 ⇄ MQTT)
+y la ESP32 publica directo por MQTT. Guía completa de conexión, red del CBOX y
+TIA Portal en [docs/CONEXION-PLC-RASPBERRY-ESP32.md](docs/CONEXION-PLC-RASPBERRY-ESP32.md).
+
 Servicios (`docker-compose.yml`):
 
 | Servicio        | Rol                                                              |

@@ -1,0 +1,156 @@
+# Configuración del gateway de la Raspberry Pi.
+# Copia este archivo a config.toml y completa tus datos:  cp config.example.toml config.toml
+# config.toml queda fuera de git (lleva los tokens de los dispositivos).
+
+[mqtt]
+# Dónde corre Mosquitto. Si la plataforma (docker compose) corre en la misma
+# Raspberry, deja "localhost". Si corre en un notebook, pon la IP del notebook.
+host = "localhost"
+port = 1883
+username = "ecs"                       # MQTT_USERNAME del .env
+password = "change-me-mqtt-password"   # MQTT_PASSWORD del .env
+prefix = "ecs"                         # MQTT_TOPIC_PREFIX del .env
+
+[gateway]
+intervalo_lectura_s = 0.5      # cada cuánto se consulta el PLC
+intervalo_publicacion_s = 5    # si un valor no cambia, igual se publica cada tanto (latido)
+intervalo_minimo_s = 1         # una misma variable no se publica más de una vez por segundo
+
+# ---------------------------------------------------------------------------
+# PLC Siemens S7-1200 (CPU 1214C DC/DC/DC). Requisito en TIA Portal:
+#   Propiedades del PLC -> Protection & Security -> Connection mechanisms ->
+#   [x] Permit access with PUT/GET communication from remote partner
+# ---------------------------------------------------------------------------
+[plc]
+slug = "plc-s7-1200"             # el ID del dispositivo registrado en la plataforma
+token = "pega-aqui-el-token-del-plc"
+ip = "10.41.32.11"
+rack = 0
+slot = 1                         # S7-1200: siempre rack 0, slot 1
+puerto = 102
+
+# Cada [[plc.tags]] es una variable que aparece como tarjeta en el dashboard.
+#   area: I (entradas), Q (salidas), M (marcas), DB (bloque de datos NO optimizado)
+#   tipo: bool, byte, int, word, dint, real
+#   escala = [crudo_min, crudo_max, valor_min, valor_max]  (opcional)
+#   escribible = true  -> se puede controlar desde un gadget Botón/Slider
+# Cambia los nombres y direcciones según lo que tengan cableado en su proyecto.
+
+[[plc.tags]]
+variable = "entrada_i0_0"
+area = "I"
+byte = 0
+bit = 0
+tipo = "bool"
+
+[[plc.tags]]
+variable = "entrada_i0_1"
+area = "I"
+byte = 0
+bit = 1
+tipo = "bool"
+
+[[plc.tags]]
+variable = "salida_q0_0"
+area = "Q"
+byte = 0
+bit = 0
+tipo = "bool"
+
+[[plc.tags]]
+variable = "salida_q0_1"
+area = "Q"
+byte = 0
+bit = 1
+tipo = "bool"
+
+# Entrada analógica integrada AI0 (IW64): 0-10 V = 0-27648
+[[plc.tags]]
+variable = "analoga_ai0"
+area = "I"
+byte = 64
+tipo = "int"
+escala = [0, 27648, 0, 10]
+unidad = "V"
+banda_muerta = 0.05
+
+# Entrada analógica integrada AI1 (IW66)
+[[plc.tags]]
+variable = "analoga_ai1"
+area = "I"
+byte = 66
+tipo = "int"
+escala = [0, 27648, 0, 10]
+unidad = "V"
+banda_muerta = 0.05
+
+# Mando remoto desde el dashboard. Se escribe una MARCA (M10.0), no la salida
+# directo: en el programa del PLC agreguen un contacto M10.0 en serie con su
+# lógica de marcha (o  M10.0 --| |-- ( Q0.0 )  para una prueba rápida).
+# Escribir Q directo solo funciona si el programa NO usa esa salida, porque el
+# PLC la sobrescribe en cada ciclo.
+[[plc.tags]]
+variable = "marcha_remota"
+area = "M"
+byte = 10
+bit = 0
+tipo = "bool"
+escribible = true
+
+# Salida Q0.2: la maneja el programa del PLC (la sobrescribe en cada ciclo), aquí solo se lee.
+[[plc.tags]]
+variable = "salida_q0_2"
+area = "Q"
+byte = 0
+bit = 2
+tipo = "bool"
+
+# Mando de Q0.2 desde el dashboard: marca M0.2 (M10.2 la usa el programa del grupo).
+# En el programa del PLC va un contacto M0.2 en paralelo con la lógica que activa Q0.2.
+[[plc.tags]]
+variable = "mando_q0_2"
+area = "M"
+byte = 0
+bit = 2
+tipo = "bool"
+escribible = true
+
+# Ejemplo de setpoint en un DB (descomenta si lo crean). En TIA Portal el DB
+# debe tener desmarcado "Optimized block access" (Propiedades del DB -> Attributes).
+# [[plc.tags]]
+# variable = "setpoint_nivel"
+# area = "DB"
+# db = 1
+# byte = 0
+# tipo = "real"
+# unidad = "%"
+# escribible = true
+
+# ---------------------------------------------------------------------------
+# Puentes ESP32 -> PLC (opcional). Copia lo que publica otro dispositivo a una
+# variable escribible del PLC, para que la lógica del PLC la use (ej. partir
+# una bomba si la humedad que mide la ESP32 baja de cierto valor).
+# Descomenta este bloque y el [[plc.tags]] de destino.
+# ---------------------------------------------------------------------------
+# [[puentes]]
+# origen = "esp32-01/humedad"            # <slug>/<variable> que publica la ESP32
+# token_origen = "pega-aqui-el-token-de-la-esp32"
+# destino = "humedad_esp32"              # variable del PLC donde se escribe
+#
+# [[plc.tags]]
+# variable = "humedad_esp32"
+# area = "DB"
+# db = 1
+# byte = 4
+# tipo = "real"
+# unidad = "%"
+# escribible = true
+
+# ---------------------------------------------------------------------------
+# La Raspberry como dispositivo propio (temperatura CPU, carga, memoria, disco
+# y "plc_en_linea" = 1/0). Bórrala si no la quieren en el dashboard.
+# ---------------------------------------------------------------------------
+[raspberry]
+slug = "raspberry-pi"
+token = "pega-aqui-el-token-de-la-raspberry"
+intervalo_s = 10

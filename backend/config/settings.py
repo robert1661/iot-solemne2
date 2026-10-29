@@ -8,6 +8,11 @@ env = environ.Env(
     DJANGO_DEBUG=(bool, False),
 )
 
+# Fuera de Docker (ej. directo en la Raspberry) las variables se leen del .env de la raíz del
+# repo. Las que ya existen en el entorno (las que pone docker compose) tienen prioridad.
+if (BASE_DIR.parent / ".env").exists():
+    environ.Env.read_env(BASE_DIR.parent / ".env")
+
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="insecure-dev-key-change-me")
 DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
@@ -61,16 +66,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", default="ecs_iot"),
-        "USER": env("POSTGRES_USER", default="ecs_iot"),
-        "PASSWORD": env("POSTGRES_PASSWORD", default=""),
-        "HOST": env("POSTGRES_HOST", default="db"),
-        "PORT": env("POSTGRES_PORT", default="5432"),
+if env("DB_ENGINE", default="postgres") == "sqlite":
+    # Sin PostgreSQL (ej. la Raspberry corriendo sin Docker): la base de datos es un archivo.
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": env("SQLITE_PATH", default=str(BASE_DIR / "db.sqlite3")),
+            "OPTIONS": {"timeout": 20},
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("POSTGRES_DB", default="ecs_iot"),
+            "USER": env("POSTGRES_USER", default="ecs_iot"),
+            "PASSWORD": env("POSTGRES_PASSWORD", default=""),
+            "HOST": env("POSTGRES_HOST", default="db"),
+            "PORT": env("POSTGRES_PORT", default="5432"),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

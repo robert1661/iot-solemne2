@@ -1,0 +1,22 @@
+# Servicio systemd para que el gateway arranque solo al encender la Raspberry.
+# Cambia "pi" por tu usuario y la ruta si clonaste el repo en otro lado.
+#
+#   sudo cp iot-gateway.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now iot-gateway
+#   journalctl -u iot-gateway -f        (ver lo que va haciendo)
+
+[Unit]
+Description=Gateway IoT PLC S7-1200 <-> MQTT
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/iot-solemne2/edge/raspberry
+ExecStart=/home/pi/iot-solemne2/edge/raspberry/.venv/bin/python gateway.py --config config.toml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

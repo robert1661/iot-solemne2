@@ -109,14 +109,18 @@ def _handle_message(topic, payload):
     elif timezone.is_naive(ts):
         ts = timezone.make_aware(ts, timezone.utc)
 
+    # "unit" es opcional en el payload (lo manda el gateway del PLC/Raspberry); si no viene,
+    # se usa la tabla DEFAULT_UNITS.
+    payload_unit = str(data.get("unit") or "")[:20]
+
     sensor, created = Sensor.objects.get_or_create(
         device=device,
         variable=variable,
-        defaults={"unit": DEFAULT_UNITS.get(variable, "")},
+        defaults={"unit": payload_unit or DEFAULT_UNITS.get(variable, "")},
     )
 
     if not created and not sensor.unit:
-        default_unit = DEFAULT_UNITS.get(variable)
+        default_unit = payload_unit or DEFAULT_UNITS.get(variable)
         if default_unit:
             sensor.unit = default_unit
             sensor.save(update_fields=["unit"])

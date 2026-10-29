@@ -28,3 +28,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Gateway de la Raspberry (lleva tokens)
+edge/raspberry/config.toml
+edge/raspberry/.venv/
+edge/raspberry/config_simulador.toml
+logs/
+backend/db.sqlite3-*
