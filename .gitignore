@@ -35,3 +35,4 @@ edge/raspberry/.venv/
 edge/raspberry/config_simulador.toml
 logs/
 backend/db.sqlite3-*
+edge/raspberry/config.toml.bak*

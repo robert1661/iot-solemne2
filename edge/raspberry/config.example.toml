@@ -50,12 +50,24 @@ byte = 0
 bit = 1
 tipo = "bool"
 
+# Q0.0 = marcha del motor (STF del variador FR-D720S)
 [[plc.tags]]
-variable = "salida_q0_0"
+variable = "motor"
 area = "Q"
 byte = 0
 bit = 0
 tipo = "bool"
+
+# Velocidad del motor: salida analógica QW80 (SB 1232) hacia el variador,
+# 0-27648 = 0-10 V = 0-60 Hz. Solo lectura (la escribe Node-RED / el programa).
+[[plc.tags]]
+variable = "velocidad_motor"
+area = "Q"
+byte = 80
+tipo = "int"
+escala = [0, 27648, 0, 60]
+unidad = "Hz"
+banda_muerta = 0.1
 
 [[plc.tags]]
 variable = "salida_q0_1"
