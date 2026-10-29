@@ -46,7 +46,7 @@
     lngInputId: "id_longitude",
     initialLat: {{ device.latitude|default_if_none:"null" }},
     initialLng: {{ device.longitude|default_if_none:"null" }},
-    iconUrl: "{% if site_branding.map_icon %}{{ site_branding.map_icon.url }}{% else %}{% static 'monitoring/img/ecs-mark.svg' %}{% endif %}"
+    iconUrl: "{% if site_branding.map_icon %}{{ site_branding.map_icon.url }}{% else %}{% static 'monitoring/img/drivelink-mark.svg' %}{% endif %}"
   });
 </script>
 {% endif %}

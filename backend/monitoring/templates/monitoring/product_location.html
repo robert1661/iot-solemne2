@@ -46,7 +46,7 @@
     lngInputId: "id_longitude",
     initialLat: {{ product.latitude|default_if_none:"null" }},
     initialLng: {{ product.longitude|default_if_none:"null" }},
-    iconUrl: "{% if product.product_type.icon %}{{ product.product_type.icon.url }}{% elif site_branding.map_icon %}{{ site_branding.map_icon.url }}{% else %}{% static 'monitoring/img/ecs-mark.svg' %}{% endif %}"
+    iconUrl: "{% if product.product_type.icon %}{{ product.product_type.icon.url }}{% elif site_branding.map_icon %}{{ site_branding.map_icon.url }}{% else %}{% static 'monitoring/img/drivelink-mark.svg' %}{% endif %}"
   });
 </script>
 {% endif %}

@@ -344,7 +344,7 @@ def _generic_map_icon_url():
     branding = SiteBranding.get_solo()
     if branding.map_icon:
         return branding.map_icon.url
-    return static("monitoring/img/ecs-mark.svg")
+    return static("monitoring/img/drivelink-mark.svg")
 
 
 def _sensor_payload_for(device):

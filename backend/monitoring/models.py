@@ -32,7 +32,7 @@ class Profile(models.Model):
     project_name = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Nombre de tu proyecto/empresa. Se muestra junto a «ECS IoT» en tu dashboard.",
+        help_text="Nombre de tu proyecto/empresa. Se muestra junto a «DriveLink IoT» en tu dashboard.",
     )
     logo = models.ImageField(
         upload_to="branding/user_logos/", blank=True, null=True, validators=[validate_image_size]
@@ -46,7 +46,7 @@ class Profile(models.Model):
 
 
 class SiteBranding(models.Model):
-    """Singleton: marca general de ECS IoT (login y valor por defecto para todos)."""
+    """Singleton: marca general de DriveLink IoT (login y valor por defecto para todos)."""
 
     logo = models.ImageField(upload_to="branding/site/", blank=True, null=True, validators=[validate_image_size])
     background_image = models.ImageField(
@@ -65,7 +65,7 @@ class SiteBranding(models.Model):
         verbose_name_plural = "Marca del sitio"
 
     def __str__(self):
-        return "Marca del sitio (ECS IoT)"
+        return "Marca del sitio (DriveLink IoT)"
 
     def save(self, *args, **kwargs):
         self.pk = 1

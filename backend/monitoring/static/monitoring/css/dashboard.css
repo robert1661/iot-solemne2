@@ -7,12 +7,12 @@
   --gridline: #e1e0d9;
   --baseline: #c3c2b7;
   --border: rgba(11, 11, 11, 0.10);
-  --series-1: #2a78d6;
+  --series-1: #0a84c6;
   --status-good: #0ca30c;
   --status-critical: #d03b3b;
   --meter-track: #cde2fb;
-  --brand-primary: #1F2933;
-  --brand-accent: #F2A900;
+  --brand-primary: #0B3D5C;
+  --brand-accent: #00C2A8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,10 +25,10 @@
     --gridline: #2c2c2a;
     --baseline: #383835;
     --border: rgba(255, 255, 255, 0.10);
-    --series-1: #3987e5;
+    --series-1: #3aa8e6;
     --meter-track: #184f95;
-    --brand-primary: #3A4A57;
-    --brand-accent: #FFC72C;
+    --brand-primary: #1E6A94;
+    --brand-accent: #2EE6CB;
   }
 }
 
@@ -49,6 +49,7 @@ body {
   justify-content: space-between;
   padding: 12px 24px;
   background: var(--surface-1);
+  border-top: 3px solid var(--brand-accent);
   border-bottom: 1px solid var(--border);
 }
 
@@ -857,4 +858,41 @@ h1 {
   font-size: 13px;
   overflow-x: auto;
   max-width: 640px;
+}
+
+/* --- Identidad DriveLink IoT --- */
+.brand-name strong {
+  color: var(--text-primary);
+}
+
+.brand-name span {
+  color: var(--brand-accent);
+}
+
+.login-hero {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.login-hero img {
+  width: 64px;
+  height: 64px;
+}
+
+.login-hero h2 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+}
+
+.login-hero p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.site-footer {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
 }

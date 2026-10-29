@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from .models import SiteBranding
 from .permissions import get_profile, is_admin_or_global
 
@@ -9,6 +11,9 @@ def role_context(request):
 
     context = {
         "site_branding": branding,
+        "brand_name": settings.SITE_NAME,
+        "site_owner": settings.SITE_OWNER,
+        "site_tagline": settings.SITE_TAGLINE,
         "effective_logo_url": site_logo_url,
         "effective_background_url": site_background_url,
     }
