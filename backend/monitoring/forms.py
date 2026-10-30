@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 from django.contrib.auth.models import User
 
 from .models import Device, ManualEntry, Product, ProductType, Profile, SiteBranding, Widget
@@ -66,6 +66,47 @@ class UserCreateForm(UserCreationForm):
         if commit:
             Profile.objects.update_or_create(user=user, defaults={"role": self.cleaned_data["role"]})
         return user
+
+
+class UserEditForm(forms.ModelForm):
+    role = forms.ChoiceField(choices=Profile.ROLE_CHOICES, label="Rol")
+
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "email")
+        labels = {"first_name": "Nombre", "last_name": "Apellido", "email": "Correo electrónico"}
+
+    def __init__(self, *args, editor_role=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
+        self.fields["role"].initial = Profile.objects.get_or_create(user=self.instance)[0].role
+        if editor_role != Profile.ROLE_GLOBAL:
+            self.fields["role"].choices = [
+                choice for choice in Profile.ROLE_CHOICES if choice[0] != Profile.ROLE_GLOBAL
+            ]
+
+    def clean_role(self):
+        role = self.cleaned_data["role"]
+        current = self.fields["role"].initial
+        if current == Profile.ROLE_GLOBAL and role != Profile.ROLE_GLOBAL:
+            other_active_globals = (
+                User.objects.filter(is_active=True, profile__role=Profile.ROLE_GLOBAL)
+                .exclude(pk=self.instance.pk)
+                .count()
+            )
+            if other_active_globals == 0:
+                raise forms.ValidationError("No puedes quitarle el rol al último usuario Global activo.")
+        return role
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            Profile.objects.update_or_create(user=user, defaults={"role": self.cleaned_data["role"]})
+        return user
+
+
+class UserPasswordResetForm(SetPasswordForm):
+    """Restablecer la contraseña de otro usuario sin pedir la actual."""
 
 
 class ProfileBrandingForm(forms.ModelForm):

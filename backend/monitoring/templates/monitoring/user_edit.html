@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Editar {{ target.username }} - {{ block.super }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Editar {{ target.username }}</h1>
+  <a class="btn-secondary" href="{% url 'monitoring:user-detail' target.pk %}">Volver</a>
+</div>
+
+<h2>Datos y rol</h2>
+<form class="form-box" method="post">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="profile">
+  {% for field in form %}
+    <div class="form-row">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<p class="field-help">{{ field.help_text }}</p>{% endif %}
+      {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+  {% endfor %}
+  <button type="submit" class="btn">Guardar cambios</button>
+</form>
+
+<h2>Restablecer contraseña</h2>
+<form class="form-box" method="post">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="password">
+  {% for field in password_form %}
+    <div class="form-row">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+  {% endfor %}
+  <button type="submit" class="btn">Cambiar contraseña</button>
+</form>
+{% endblock %}

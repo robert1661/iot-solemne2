@@ -9,6 +9,7 @@ class MonitoringConfig(AppConfig):
         from django.contrib.auth import get_user_model
         from django.db.models.signals import post_save
 
+        from . import signals  # noqa: F401  (registra el registro de accesos)
         from .permissions import get_profile
 
         def _ensure_profile(sender, instance, created, **kwargs):

@@ -3,14 +3,20 @@
 {% block content %}
 <div class="page-header">
   <h1>{{ target.username }}</h1>
-  <a class="btn-secondary" href="{% url 'monitoring:user-list' %}">Volver a usuarios</a>
+  <div>
+    {% if user_role == "global" or target.profile.role != "global" %}
+    <a class="btn" href="{% url 'monitoring:user-edit' target.pk %}">Editar</a>
+    {% endif %}
+    <a class="btn-secondary" href="{% url 'monitoring:user-list' %}">Volver a usuarios</a>
+  </div>
 </div>
 
 <p class="hint">
   Rol: <strong>{{ role_label }}</strong> ·
   {% if target.is_active %}Activo{% else %}Inactivo{% endif %} ·
   Correo: {{ target.email|default:"—" }} ·
-  Alta: {{ target.date_joined|date:"Y-m-d" }}
+  Alta: {{ target.date_joined|date:"Y-m-d" }} ·
+  Último acceso: {{ target.last_login|date:"Y-m-d H:i"|default:"Nunca" }}
 </p>
 
 {% if target != request.user %}

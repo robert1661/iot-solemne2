@@ -32,6 +32,7 @@
                         <div class="nav-dropdown-menu">
                             {% if user_is_admin_or_global %}
                                 <a href="{% url 'monitoring:user-list' %}">Usuarios</a>
+                                <a href="{% url 'monitoring:user-sessions' %}">Sesiones y accesos</a>
                             {% endif %}
                             {% if user_role == "global" %}
                                 <a href="{% url 'monitoring:site-branding-edit' %}">Marca del sitio</a>

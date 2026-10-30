@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    AccessLog,
     Device,
     ManualEntry,
     Product,
@@ -122,3 +123,11 @@ class UnregisteredReadingAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(AccessLog)
+class AccessLogAdmin(admin.ModelAdmin):
+    list_display = ("timestamp", "username", "event", "ip_address")
+    list_filter = ("event",)
+    search_fields = ("username", "ip_address")
+    readonly_fields = [f.name for f in AccessLog._meta.fields]

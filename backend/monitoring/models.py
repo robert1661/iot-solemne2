@@ -308,3 +308,34 @@ class UnregisteredReading(models.Model):
 
     def __str__(self):
         return f"{self.topic} @ {self.received_at}"
+
+
+class AccessLog(models.Model):
+    """Registro de accesos a la plataforma: inicios y cierres de sesión e intentos fallidos.
+
+    Se llena con las señales de django.contrib.auth (ver signals.py). `username`
+    se guarda aparte porque un intento fallido puede no corresponder a ningún User.
+    """
+
+    EVENT_LOGIN = "login"
+    EVENT_LOGOUT = "logout"
+    EVENT_FAILED = "failed"
+    EVENT_CHOICES = [
+        (EVENT_LOGIN, "Inicio de sesión"),
+        (EVENT_LOGOUT, "Cierre de sesión"),
+        (EVENT_FAILED, "Intento fallido"),
+    ]
+
+    user = models.ForeignKey(User, related_name="access_logs", null=True, blank=True, on_delete=models.SET_NULL)
+    username = models.CharField(max_length=150)
+    event = models.CharField(max_length=10, choices=EVENT_CHOICES)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    session_key = models.CharField(max_length=40, blank=True, db_index=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return f"{self.username} {self.get_event_display()} @ {self.timestamp}"

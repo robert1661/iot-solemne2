@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Sesiones y accesos - {{ block.super }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Sesiones y accesos</h1>
+  <a class="btn-secondary" href="{% url 'monitoring:user-list' %}">Volver a usuarios</a>
+</div>
+
+<p class="hint">
+  Datos guardados en la base de datos SQLite de la plataforma (tablas <code>django_session</code> y
+  <code>monitoring_accesslog</code>). Intentos fallidos en las últimas 24 h: <strong>{{ failed_24h }}</strong>.
+</p>
+
+<h2>Usuarios conectados ({{ sessions|length }})</h2>
+{% if sessions %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Rol</th>
+        <th>Inició sesión</th>
+        <th>IP</th>
+        <th>Expira</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in sessions %}
+      <tr>
+        <td>
+          <span class="badge online"></span>
+          <a href="{% url 'monitoring:user-detail' row.user.pk %}">{{ row.user.username }}</a>
+          {% if row.session.session_key == request.session.session_key %}(tú){% endif %}
+        </td>
+        <td>{{ row.user.profile.get_role_display }}</td>
+        <td>{% if row.login %}{{ row.login.timestamp|date:"Y-m-d H:i" }} (hace {{ row.login.timestamp|timesince }}){% else %}—{% endif %}</td>
+        <td>{{ row.login.ip_address|default:"—" }}</td>
+        <td>{{ row.session.expire_date|date:"Y-m-d H:i" }}</td>
+        <td>
+          {% if row.session.session_key != request.session.session_key %}
+          <form method="post" action="{% url 'monitoring:session-terminate' row.session.session_key %}"
+                onsubmit="return confirm('¿Cerrar la sesión de {{ row.user.username }}?');">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary">Cerrar sesión</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="empty-state">No hay sesiones abiertas.</p>
+{% endif %}
+
+<h2>Registro de accesos</h2>
+<form method="get" class="list-toolbar">
+  <label>Evento
+    <select name="event" onchange="this.form.submit()">
+      <option value="" {% if not selected_event %}selected{% endif %}>Todos</option>
+      {% for value, label in event_choices %}
+      <option value="{{ value }}" {% if value == selected_event %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if selected_event %}
+  <a class="clear-filters" href="{% url 'monitoring:user-sessions' %}">Limpiar filtros</a>
+  {% endif %}
+</form>
+{% if logs %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Usuario</th>
+        <th>Evento</th>
+        <th>IP</th>
+        <th>Navegador</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+        <td>{% if log.user %}<a href="{% url 'monitoring:user-detail' log.user.pk %}">{{ log.username }}</a>{% else %}{{ log.username|default:"—" }}{% endif %}</td>
+        <td>{% if log.event == "failed" %}<span class="badge offline">{{ log.get_event_display }}</span>{% else %}{{ log.get_event_display }}{% endif %}</td>
+        <td>{{ log.ip_address|default:"—" }}</td>
+        <td title="{{ log.user_agent }}">{{ log.user_agent|truncatechars:40|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="field-help">Se muestran los últimos {{ log_limit }} eventos.</p>
+{% else %}
+<p class="empty-state">Todavía no hay accesos registrados.</p>
+{% endif %}
+{% endblock %}

@@ -1,10 +1,13 @@
 import json
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import messages
 from django.templatetags.static import static
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
+from django.contrib.sessions.models import Session
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.http import HttpResponseNotAllowed, JsonResponse
@@ -21,9 +24,11 @@ from .forms import (
     ProfileBrandingForm,
     SiteBrandingForm,
     UserCreateForm,
+    UserEditForm,
+    UserPasswordResetForm,
     WidgetForm,
 )
-from .models import Device, ManualEntry, Product, ProductType, Profile, Sensor, SiteBranding
+from .models import AccessLog, Device, ManualEntry, Product, ProductType, Profile, Sensor, SiteBranding
 from .mqtt_publish import publish_command
 from .permissions import (
     admin_or_global_required,
@@ -314,6 +319,102 @@ def user_detail(request, pk):
         "sensors_active_count": sensors.filter(is_active=True).count(),
     }
     return render(request, "monitoring/user_detail.html", context)
+
+
+def _can_manage(editor, target):
+    """Un Administrador no puede editar ni desconectar a un usuario Global."""
+    return is_global(editor) or not is_global(target)
+
+
+@admin_or_global_required
+def user_edit(request, pk):
+    target = get_object_or_404(User, pk=pk)
+    if not _can_manage(request.user, target):
+        raise PermissionDenied
+    editor_role = get_role(request.user)
+    form = UserEditForm(instance=target, editor_role=editor_role)
+    password_form = UserPasswordResetForm(target)
+
+    if request.method == "POST":
+        if request.POST.get("action") == "password":
+            password_form = UserPasswordResetForm(target, request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                if target == request.user:
+                    update_session_auth_hash(request, target)
+                messages.success(request, f"Contraseña de «{target.username}» restablecida.")
+                return redirect("monitoring:user-detail", pk=target.pk)
+        else:
+            form = UserEditForm(request.POST, instance=target, editor_role=editor_role)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f"Usuario «{target.username}» actualizado.")
+                return redirect("monitoring:user-detail", pk=target.pk)
+
+    context = {"target": target, "form": form, "password_form": password_form}
+    return render(request, "monitoring/user_edit.html", context)
+
+
+def _active_sessions():
+    """Sesiones vigentes en la tabla django_session, con su usuario y datos del login."""
+    sessions = list(Session.objects.filter(expire_date__gt=timezone.now()))
+    user_ids = {}
+    for session in sessions:
+        user_id = session.get_decoded().get("_auth_user_id")
+        if user_id:
+            user_ids[session.session_key] = int(user_id)
+    users = User.objects.select_related("profile").in_bulk(set(user_ids.values()))
+    logins = {
+        log.session_key: log
+        for log in AccessLog.objects.filter(event=AccessLog.EVENT_LOGIN, session_key__in=user_ids.keys())
+    }
+    rows = []
+    for session in sessions:
+        user = users.get(user_ids.get(session.session_key))
+        if user is None:
+            continue
+        rows.append({"session": session, "user": user, "login": logins.get(session.session_key)})
+    rows.sort(key=lambda r: r["login"].timestamp if r["login"] else r["session"].expire_date, reverse=True)
+    return rows
+
+
+ACCESS_LOG_LIMIT = 100
+
+
+@admin_or_global_required
+def user_sessions(request):
+    logs = AccessLog.objects.select_related("user")
+    event = request.GET.get("event", "")
+    if event in dict(AccessLog.EVENT_CHOICES):
+        logs = logs.filter(event=event)
+
+    context = {
+        "sessions": _active_sessions(),
+        "logs": logs[:ACCESS_LOG_LIMIT],
+        "log_limit": ACCESS_LOG_LIMIT,
+        "event_choices": AccessLog.EVENT_CHOICES,
+        "selected_event": event,
+        "failed_24h": AccessLog.objects.filter(
+            event=AccessLog.EVENT_FAILED, timestamp__gte=timezone.now() - timedelta(hours=24)
+        ).count(),
+    }
+    return render(request, "monitoring/user_sessions.html", context)
+
+
+@admin_or_global_required
+@require_POST
+def session_terminate(request, session_key):
+    session = get_object_or_404(Session, session_key=session_key)
+    if session_key == request.session.session_key:
+        messages.error(request, "Esa es tu sesión actual: usa «Salir» para cerrarla.")
+        return redirect("monitoring:user-sessions")
+    user = User.objects.filter(pk=session.get_decoded().get("_auth_user_id")).first()
+    if user and not _can_manage(request.user, user):
+        raise PermissionDenied
+    session.delete()
+    name = user.username if user else "anónimo"
+    messages.success(request, f"Sesión de «{name}» cerrada.")
+    return redirect("monitoring:user-sessions")
 
 
 @login_required
